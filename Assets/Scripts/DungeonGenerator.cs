@@ -5,7 +5,7 @@ using UnityEngine;
 public class DungeonGenerator : MonoBehaviour
 {
     public RectInt room;
-    public int minRoomSize = 10;
+    public Vector2 minRoomSizeRage = new Vector2(10,20);
     
     Coroutine drawCoroutine;
     List<RectInt> roomsToDraw = new List<RectInt>();
@@ -47,7 +47,7 @@ public class DungeonGenerator : MonoBehaviour
             RectInt currentRoom = roomsToSplit[0];
             roomsToSplit.Remove(currentRoom);
 
-            int minRoomSizeRange = Random.Range(minRoomSize, minRoomSize*2);
+            int minRoomSizeRange = Random.Range((int)minRoomSizeRage.x, (int)minRoomSizeRage.y);
 
             if (currentRoom.width < minRoomSizeRange * 2&& currentRoom.height < minRoomSizeRange * 2)
             {
@@ -66,14 +66,14 @@ public class DungeonGenerator : MonoBehaviour
 
         if (pRoom.width>= pRoom.height)//vertical
         {
-            splitRandom = Random.Range(minRoomSize, pRoom.width - minRoomSize);
+            splitRandom = Random.Range((int)minRoomSizeRage.x, pRoom.width - (int)minRoomSizeRage.x);
             
             room1 = new RectInt(pRoom.x, pRoom.y, splitRandom + 1, pRoom.height);
             room2 = new RectInt(pRoom.x + splitRandom , pRoom.y, pRoom.width - splitRandom, pRoom.height);
         }
        else//horizontal
        {
-            splitRandom = Random.Range(minRoomSize, pRoom.height - minRoomSize);
+            splitRandom = Random.Range((int)minRoomSizeRage.x, pRoom.height - (int)minRoomSizeRage.x);
 
             room1 = new RectInt(pRoom.x, pRoom.y, pRoom.width, splitRandom + 1);
             room2 = new RectInt(pRoom.x, pRoom.y + splitRandom - 1, pRoom.width , pRoom.height - splitRandom + 1);
