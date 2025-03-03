@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class DungeonGenerator : MonoBehaviour
 {
-    public RectInt room;
+    public RectInt startRoom;
     public Vector2 minRoomSizeRage = new Vector2(10, 20);
 
     Coroutine drawCoroutine;
@@ -16,7 +16,7 @@ public class DungeonGenerator : MonoBehaviour
 
     void Start()
     {
-        roomsToSplit.Add(room);
+        roomsToSplit.Add(startRoom);
         drawCoroutine = StartCoroutine(DrawCoroutine());
     }
 
@@ -27,7 +27,7 @@ public class DungeonGenerator : MonoBehaviour
 
     void Drawing()
     {
-        AlgorithmsUtils.DebugRectInt(room, Color.red);
+        AlgorithmsUtils.DebugRectInt(startRoom, Color.red);
 
         for (int i = 0; i < roomsToSplit.Count; i++)
         {
