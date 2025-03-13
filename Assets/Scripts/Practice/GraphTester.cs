@@ -20,7 +20,8 @@ public class GraphTester : MonoBehaviour
         if(Input.GetKeyDown(KeyCode.T))
         {
             Debug.Log("Graph Structure:");
-            graph.Print();
+            //graph.Print();
+            Debug.Log(graph.GetNeighbors("A"));
         }
     }
 }

@@ -27,11 +27,14 @@ public class DungeonGenerator : MonoBehaviour
 
     void Drawing()
     {
+        DebugExtension.DebugCircle(new Vector3(startRoom.x + (startRoom.width/2),0, startRoom.y+(startRoom.height/2)), Color.red, 10);
+        
         AlgorithmsUtils.DebugRectInt(startRoom, Color.red);
 
         for (int i = 0; i < roomsToSplit.Count; i++)
         {
             AlgorithmsUtils.DebugRectInt(roomsToSplit[i], Color.red);
+            
         }
 
         for (int i = 0; i < roomsToDraw.Count; i++)
