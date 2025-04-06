@@ -52,6 +52,16 @@ public class InventorySystem : MonoBehaviour
         }
     }
 
+    public bool Search(string Key)
+    {
+        bool isInInventory = false;
+        foreach (var ele in _inventory)
+        {
+            if (ele.Key == Key) isInInventory = true;
+        }
+        return isInInventory;
+    }
+
     public bool HasItem(string itemName)
     {
         return _inventory.ContainsKey(itemName);

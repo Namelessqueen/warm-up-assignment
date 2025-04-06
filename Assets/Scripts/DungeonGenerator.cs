@@ -7,12 +7,12 @@ public class DungeonGenerator : MonoBehaviour
 {
     public RectInt startRoom;
     public Vector2 minRoomSizeRage = new Vector2(10, 20);
+    Graph<RectInt> graph = new Graph<RectInt>();
 
     Coroutine drawCoroutine;
     List<RectInt> roomsToDraw = new List<RectInt>();
     List<RectInt> roomsToSplit = new List<RectInt>();
     List<RectInt> Doors = new List<RectInt>();
-    List<RectInt> DoorIntersections = new List<RectInt>();
 
     void Start()
     {
@@ -27,14 +27,19 @@ public class DungeonGenerator : MonoBehaviour
 
     void Drawing()
     {
-        DebugExtension.DebugCircle(new Vector3(startRoom.x + (startRoom.width/2),0, startRoom.y+(startRoom.height/2)), Color.red, 10);
-        
+        //DebugExtension.DebugCircle(new Vector3(startRoom.x + (startRoom.width/2),0, startRoom.y+(startRoom.height/2)), Color.red, 10);
+
+        if (Input.GetKeyDown(KeyCode.G))
+        {
+            Debug.Log("print graph now");
+            graph.Print();
+        }
+
         AlgorithmsUtils.DebugRectInt(startRoom, Color.red);
 
         for (int i = 0; i < roomsToSplit.Count; i++)
         {
             AlgorithmsUtils.DebugRectInt(roomsToSplit[i], Color.red);
-            
         }
 
         for (int i = 0; i < roomsToDraw.Count; i++)
@@ -46,6 +51,7 @@ public class DungeonGenerator : MonoBehaviour
         {
             AlgorithmsUtils.DebugRectInt(Doors[i], Color.cyan);
         }
+       
     }
     IEnumerator DrawCoroutine()
     {
@@ -63,14 +69,12 @@ public class DungeonGenerator : MonoBehaviour
             if (currentRoom.width < minRoomSizeRange * 2 && currentRoom.height < minRoomSizeRange * 2)
             {
                 roomsToDraw.Add(currentRoom);
-
             }
             else SplitRooms(currentRoom);
 
             yield return new WaitForSeconds(0.1f);
         }
 
-        //Doors
         for (int i = 0; i < roomsToDraw.Count; i++)
         {
             for (int j = i + 1; j < roomsToDraw.Count; j++)
@@ -80,18 +84,14 @@ public class DungeonGenerator : MonoBehaviour
                     RectInt Inter = AlgorithmsUtils.Intersect(roomsToDraw[i], roomsToDraw[j]);
                     if ((Inter.width == 1 && Inter.height > 5) || (Inter.height == 1 && Inter.width > 5))
                     {
-                        DoorIntersections.Add(Inter);
+                        MakeDoor(roomsToDraw[i], roomsToDraw[j]);
+                        yield return new WaitForSeconds(0.1f);
                     }
                 }
             }
         }
-        for (int i = 0; i < DoorIntersections.Count; i++)
-        {
-            MakeDoor(DoorIntersections[i]);
-            yield return new WaitForSeconds(0.1f);
-        }
 
-        Debug.Log("drawing is done; Total room count: " + roomsToDraw.Count + "|  total Intersections: " + DoorIntersections.Count);
+        Debug.Log("drawing is done; Total room count: " + roomsToDraw.Count + "|  total Intersections: " + Doors.Count);
 
     }
     void SplitRooms(RectInt pRoom)
@@ -117,9 +117,11 @@ public class DungeonGenerator : MonoBehaviour
         roomsToSplit.Insert(0, room1); roomsToSplit.Insert(1, room2);
     }
 
-    void MakeDoor(RectInt intersect)
+    void MakeDoor(RectInt room1, RectInt room2)
     {
         RectInt door = new RectInt(0, 0, 0, 0); int positionRandom;
+        RectInt intersect = AlgorithmsUtils.Intersect(room1, room2);
+
         if (intersect.width == 1)
         {
             positionRandom = Random.Range(2, intersect.height-3);
@@ -133,5 +135,9 @@ public class DungeonGenerator : MonoBehaviour
         else Debug.LogError("Intersection not valid");
 
         Doors.Add(door);
+        graph.AddNode(door); graph.AddNode(room1); graph.AddNode(room2);
+        graph.AddEdge(door, room1); graph.AddEdge(door, room2);
+
     }
+
 }
