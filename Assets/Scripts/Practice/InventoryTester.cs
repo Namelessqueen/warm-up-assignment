@@ -27,5 +27,9 @@ public class InventoryTester : MonoBehaviour
         {
             inventorySystem.RemoveItem(item);
         }
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            Debug.Log(inventorySystem.Search(item));
+        }
     }
 }
