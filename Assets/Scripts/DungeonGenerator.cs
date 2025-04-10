@@ -32,7 +32,6 @@ public class DungeonGenerator : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.G))
         {
             Debug.Log("print graph now");
-            graph.Print();
         }
 
         AlgorithmsUtils.DebugRectInt(startRoom, Color.red);
@@ -51,7 +50,11 @@ public class DungeonGenerator : MonoBehaviour
         {
             AlgorithmsUtils.DebugRectInt(Doors[i], Color.cyan);
         }
-       
+
+        for(int i = 0;i < graph.GetNodeCount(); i++)
+        {
+            DebugExtension.DebugWireSphere(graph.GetNodes()[i].center, Color.blue, 5f);
+        }
     }
     IEnumerator DrawCoroutine()
     {
@@ -90,6 +93,12 @@ public class DungeonGenerator : MonoBehaviour
                 }
             }
         }
+
+        foreach (RectInt room in roomsToDraw)
+        {
+            graph.AddNode(room);
+        }
+
 
         Debug.Log("drawing is done; Total room count: " + roomsToDraw.Count + "|  total Intersections: " + Doors.Count);
 
@@ -135,8 +144,8 @@ public class DungeonGenerator : MonoBehaviour
         else Debug.LogError("Intersection not valid");
 
         Doors.Add(door);
-        graph.AddNode(door); graph.AddNode(room1); graph.AddNode(room2);
-        graph.AddEdge(door, room1); graph.AddEdge(door, room2);
+        //graph.AddNode(door); graph.AddNode(room1); graph.AddNode(room2);
+        //graph.AddEdge(door, room1); graph.AddEdge(door, room2);
 
     }
 

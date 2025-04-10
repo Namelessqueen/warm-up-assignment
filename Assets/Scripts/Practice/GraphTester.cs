@@ -39,7 +39,6 @@ public class GraphTester : MonoBehaviour
         {
             Debug.Log("Graph Structure:");
             //graph.Print();
-            graph.Print();
         }
     }
 }
