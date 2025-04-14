@@ -91,6 +91,8 @@ public class Graph<T>
         HashSet<T> discovered = new HashSet<T>();
         Queue<T> Q = new Queue<T>();
         
+        bool isConnected = false;
+
         Q.Enqueue(v);
         discovered.Add(v);
 
@@ -107,6 +109,8 @@ public class Graph<T>
                 }
             }
         }
+        isConnected = discovered.Count == GetNodeCount();
+        Debug.Log(isConnected);
     }
 
     // Depth-First Search (DFS)

@@ -39,6 +39,7 @@ public class DungeonGenerator : MonoBehaviour
     {
         roomsToSplit.Add(startRoom);
         drawCoroutine = StartCoroutine(DrawCoroutine());
+        navMeshSurface = FindAnyObjectByType<NavMeshSurface>();
     }
 
     void Update()
@@ -68,16 +69,16 @@ public class DungeonGenerator : MonoBehaviour
         }
 
         //Nodes
-        for(int i = 0;i < graph.GetNodeCount(); i++)
+        for (int i = 0; i < graph.GetNodeCount(); i++)
         {
             Vector3 doorpos = new Vector3(graph.GetNodes()[i].center.x, 0, graph.GetNodes()[i].center.y);
-            DebugExtension.DebugWireSphere(doorpos, Color.blue, 2f);
+            DebugExtension.DebugWireSphere(doorpos, Color.blue, 1.5f);
 
             for (int j = 0; j < graph.GetNeighbors(graph.GetNodes()[i]).Count; j++)
             {
                 Vector3 roomPos = new Vector3(graph.GetNeighbors(graph.GetNodes()[i])[j].center.x, 0, graph.GetNeighbors(graph.GetNodes()[i])[j].center.y); ;
-                Debug.DrawLine(doorpos, roomPos,Color.yellow);
-            } 
+                Debug.DrawLine(doorpos, roomPos, Color.yellow);
+            }
         }
 
 
@@ -87,6 +88,8 @@ public class DungeonGenerator : MonoBehaviour
     public void CreateDungeon()
     {
         roomsToSplit.Clear(); roomsToDraw.Clear(); Doors.Clear();
+        Destroy(WallsParent); Destroy(FloorParent);
+        graph.Clear();
 
         roomsToSplit.Add(startRoom);
         drawCoroutine = StartCoroutine(DrawCoroutine());
@@ -139,7 +142,7 @@ public class DungeonGenerator : MonoBehaviour
             }
         }
 
-        graph.BFS(graph.GetNodes()[0]) ;
+        graph.BFS(graph.GetNodes()[0]);
 
         Debug.Log("drawing is done; Total room count: " + roomsToDraw.Count + "|  total Intersections: " + Doors.Count);
 
@@ -285,7 +288,7 @@ public class DungeonGenerator : MonoBehaviour
             else if (Doors[i].width > 1) Instantiate(FloorPrefab, new Vector3(Doors[i].x+1, 0, Doors[i].y), FloorPrefab.transform.rotation, parentGameObject.transform);
         }
         parentGameObject.transform.parent = FloorParent.transform;
-        parentGameObject.transform.position = new Vector3(0.5f, 0.5f, 0.5f);
+        parentGameObject.transform.position = new Vector3(0.5f, 0, 0.5f);
     }
 
     [Button]
