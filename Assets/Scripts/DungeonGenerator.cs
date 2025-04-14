@@ -1,6 +1,10 @@
+using NaughtyAttributes;
+using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.AI.Navigation;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 
 public class DungeonGenerator : MonoBehaviour
@@ -13,6 +17,23 @@ public class DungeonGenerator : MonoBehaviour
     List<RectInt> roomsToDraw = new List<RectInt>();
     List<RectInt> roomsToSplit = new List<RectInt>();
     List<RectInt> Doors = new List<RectInt>();
+
+    public bool skipCoroutine = false;
+
+
+    private List<Vector2> Walls = new List<Vector2>();
+    private List<GameObject> Wallparents = new List<GameObject>();
+
+    [SerializeField]
+    private GameObject FloorPrefab;
+    [SerializeField]
+    private GameObject WallPrefab;
+
+    private GameObject WallsParent;
+    private GameObject FloorParent;
+
+    NavMeshSurface navMeshSurface;
+
 
     void Start()
     {
@@ -28,7 +49,6 @@ public class DungeonGenerator : MonoBehaviour
     void Drawing()
     {
         //DebugExtension.DebugCircle(new Vector3(startRoom.x + (startRoom.width/2),0, startRoom.y+(startRoom.height/2)), Color.red, 10);
-
         if (Input.GetKeyDown(KeyCode.G))
         {
             Debug.Log("print graph now");
@@ -53,11 +73,21 @@ public class DungeonGenerator : MonoBehaviour
 
         for(int i = 0;i < graph.GetNodeCount(); i++)
         {
-            DebugExtension.DebugWireSphere(graph.GetNodes()[i].center, Color.blue, 5f);
+            //DebugExtension.DebugWireSphere(graph.GetNodes()[i].center, Color.blue, 5f);
         }
+    }
+
+    [Button]
+    public void CreateDungeon()
+    {
+        roomsToSplit.Clear(); roomsToDraw.Clear(); Doors.Clear();
+
+        roomsToSplit.Add(startRoom);
+        drawCoroutine = StartCoroutine(DrawCoroutine());
     }
     IEnumerator DrawCoroutine()
     {
+
         //Rooms
         yield return new WaitForEndOfFrame();
         Debug.Log("coroutine start");
@@ -75,7 +105,7 @@ public class DungeonGenerator : MonoBehaviour
             }
             else SplitRooms(currentRoom);
 
-            yield return new WaitForSeconds(0.1f);
+            if(!skipCoroutine)yield return new WaitForSeconds(0.1f);
         }
 
         for (int i = 0; i < roomsToDraw.Count; i++)
@@ -88,7 +118,7 @@ public class DungeonGenerator : MonoBehaviour
                     if ((Inter.width == 1 && Inter.height > 5) || (Inter.height == 1 && Inter.width > 5))
                     {
                         MakeDoor(roomsToDraw[i], roomsToDraw[j]);
-                        yield return new WaitForSeconds(0.1f);
+                        if (!skipCoroutine) yield return new WaitForSeconds(0.1f);
                     }
                 }
             }
@@ -147,6 +177,111 @@ public class DungeonGenerator : MonoBehaviour
         //graph.AddNode(door); graph.AddNode(room1); graph.AddNode(room2);
         //graph.AddEdge(door, room1); graph.AddEdge(door, room2);
 
+    }
+
+    /// <summary> Assests
+    /// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// </summary>
+    [Button]
+    public void SpawnDungeonAssets()
+    {
+        Destroy(WallsParent);
+        Destroy(FloorParent);
+        Wallparents.Clear(); Walls.Clear();
+
+        WallsParent = new GameObject("WallParent");
+        FloorParent = new GameObject("ParentFloor");
+
+        for (int i = 0; i < Doors.Count; i++)
+        {
+            Walls.Add(Doors[i].position);
+            if(Doors[i].height > 1) Walls.Add(new Vector2(Doors[i].x, Doors[i].y+1));
+            else if (Doors[i].width > 1) Walls.Add(new Vector2(Doors[i].x+1, Doors[i].y));
+        }
+        for (int i = 0; i < roomsToDraw.Count; i++)
+        {
+            
+            spawnroom(roomsToDraw[i]);
+        }
+        CreateFloor();
+    }
+    private void spawnroom(RectInt rectInt)
+    {
+        //Debug.Log(rectInt);
+
+        GameObject parentGameObject = new GameObject("Room: " + rectInt.position);
+        Wallparents.Add(parentGameObject);
+
+        for (int i = 0; i < rectInt.height; i++)
+        {
+            Vector2 postition = new Vector2(rectInt.x, rectInt.y + i);
+
+            if (!Walls.Contains(postition))
+            {
+                var newObject = Instantiate(WallPrefab, new Vector3(postition.x, 0, postition.y), Quaternion.identity, parentGameObject.transform);
+                newObject.name = "Wall: " + postition;
+                Walls.Add(postition);
+            }
+
+            postition = new Vector2(rectInt.x + rectInt.width - 1, rectInt.y + i);
+            if (!Walls.Contains(postition))
+            {
+                var newObject = Instantiate(WallPrefab, new Vector3(postition.x, 0, postition.y), Quaternion.identity, parentGameObject.transform);
+                newObject.name = "Wall: " + postition;
+                Walls.Add(postition);
+            }
+        }
+        for (int i = 0; i < rectInt.width; i++)
+        {
+            Vector2 postition = new Vector2(rectInt.x + i, rectInt.y);
+
+            if (!Walls.Contains(postition))
+            {
+
+                var newObject = Instantiate(WallPrefab, new Vector3(postition.x, 0, postition.y), Quaternion.identity, parentGameObject.transform);
+                newObject.name = "Wall: " + postition;
+                Walls.Add(postition);
+            }
+            postition = new Vector2(rectInt.x + i, rectInt.y + rectInt.height - 1);
+            if (!Walls.Contains(postition))
+            {
+                var newObject = Instantiate(WallPrefab, new Vector3(postition.x, 0, postition.y), Quaternion.identity, parentGameObject.transform);
+                newObject.name = "Wall: " + postition;
+                Walls.Add(postition);
+            }
+        }
+        parentGameObject.transform.position = new Vector3(0.5f, 0.5f, 0.5f);
+        parentGameObject.transform.parent = WallsParent.transform;
+    }
+
+    public void CreateFloor()
+    {
+        GameObject parentGameObject = new GameObject("ParentFloor");
+        for (int i = 0; i < roomsToDraw.Count; i++)
+        {
+            for (int j = 1; j < roomsToDraw[i].width - 1; j++)
+            {
+                for (int k = 1; k < roomsToDraw[i].height - 1; k++)
+                {
+                    Instantiate(FloorPrefab, new Vector3(j + roomsToDraw[i].x, 0, k + roomsToDraw[i].y), FloorPrefab.transform.rotation, parentGameObject.transform);
+                }
+            }
+        }
+        for(int i = 0;i < Doors.Count; i++)
+        {
+            Instantiate(FloorPrefab, new Vector3(Doors[i].x, 0, Doors[i].y), FloorPrefab.transform.rotation, parentGameObject.transform);
+
+            if(Doors[i].height > 1) Instantiate(FloorPrefab, new Vector3(Doors[i].x, 0, Doors[i].y + 1), FloorPrefab.transform.rotation, parentGameObject.transform);
+            else if (Doors[i].width > 1) Instantiate(FloorPrefab, new Vector3(Doors[i].x+1, 0, Doors[i].y), FloorPrefab.transform.rotation, parentGameObject.transform);
+        }
+        parentGameObject.transform.parent = FloorParent.transform;
+        parentGameObject.transform.position = new Vector3(0.5f, 0.5f, 0.5f);
+    }
+
+    [Button]
+    public void NavMeshSurface()
+    {
+        navMeshSurface.BuildNavMesh();
     }
 
 }

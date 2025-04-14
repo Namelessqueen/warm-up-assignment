@@ -583,6 +583,8 @@ MonoBehaviour:
     width: 100
     height: 100
   minRoomSizeRage: {x: 10, y: 20}
+  FloorPrefab: {fileID: 687030772495879857, guid: a0be9d1914a4e904eb363746bf17ae96, type: 3}
+  WallPrefab: {fileID: 1834649349464787830, guid: 211d66aaf1444914e9cd932be1ede1a2, type: 3}
 --- !u!4 &1896140450
 Transform:
   m_ObjectHideFlags: 0
