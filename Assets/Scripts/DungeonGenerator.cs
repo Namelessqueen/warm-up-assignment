@@ -27,13 +27,7 @@ public class DungeonGenerator : MonoBehaviour
 
     void Drawing()
     {
-        //DebugExtension.DebugCircle(new Vector3(startRoom.x + (startRoom.width/2),0, startRoom.y+(startRoom.height/2)), Color.red, 10);
-
-        if (Input.GetKeyDown(KeyCode.G))
-        {
-            Debug.Log("print graph now");
-        }
-
+        //Rooms
         AlgorithmsUtils.DebugRectInt(startRoom, Color.red);
 
         for (int i = 0; i < roomsToSplit.Count; i++)
@@ -46,15 +40,26 @@ public class DungeonGenerator : MonoBehaviour
             AlgorithmsUtils.DebugRectInt(roomsToDraw[i], Color.green);
         }
 
+        //Doors
         for (int i = 0; i < Doors.Count; i++)
         {
             AlgorithmsUtils.DebugRectInt(Doors[i], Color.cyan);
         }
 
+        //Nodes
         for(int i = 0;i < graph.GetNodeCount(); i++)
         {
-            DebugExtension.DebugWireSphere(graph.GetNodes()[i].center, Color.blue, 5f);
+            Vector3 doorpos = new Vector3(graph.GetNodes()[i].center.x, 0, graph.GetNodes()[i].center.y);
+            DebugExtension.DebugWireSphere(doorpos, Color.blue, 2f);
+
+            for (int j = 0; j < graph.GetNeighbors(graph.GetNodes()[i]).Count; j++)
+            {
+                Vector3 roomPos = new Vector3(graph.GetNeighbors(graph.GetNodes()[i])[j].center.x, 0, graph.GetNeighbors(graph.GetNodes()[i])[j].center.y); ;
+                Debug.DrawLine(doorpos, roomPos,Color.yellow);
+            } 
         }
+
+
     }
     IEnumerator DrawCoroutine()
     {
@@ -94,11 +99,16 @@ public class DungeonGenerator : MonoBehaviour
             }
         }
 
-        foreach (RectInt room in roomsToDraw)
+        for (int i = 0; i < roomsToDraw.Count; i++)
         {
-            graph.AddNode(room);
+            for (int j = i + 1; j < roomsToDraw.Count; j++)
+            {
+                //graph.AddEdge(roomsToDraw[i], roomsToDraw[j]);
+                //yield return new WaitForSeconds(0.1f);
+            }
         }
 
+        graph.BFS(graph.GetNodes()[0]) ;
 
         Debug.Log("drawing is done; Total room count: " + roomsToDraw.Count + "|  total Intersections: " + Doors.Count);
 
@@ -144,8 +154,7 @@ public class DungeonGenerator : MonoBehaviour
         else Debug.LogError("Intersection not valid");
 
         Doors.Add(door);
-        //graph.AddNode(door); graph.AddNode(room1); graph.AddNode(room2);
-        //graph.AddEdge(door, room1); graph.AddEdge(door, room2);
+        graph.AddEdge(door, room1); graph.AddEdge(door, room2);
 
     }
 

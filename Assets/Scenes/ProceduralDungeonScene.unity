@@ -581,8 +581,8 @@ MonoBehaviour:
     x: 0
     y: 0
     width: 100
-    height: 100
-  minRoomSizeRage: {x: 10, y: 20}
+    height: 80
+  minRoomSizeRage: {x: 15, y: 20}
 --- !u!4 &1896140450
 Transform:
   m_ObjectHideFlags: 0
