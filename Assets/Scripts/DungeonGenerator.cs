@@ -71,14 +71,14 @@ public class DungeonGenerator : MonoBehaviour
         //Nodes
         for (int i = 0; i < graph.GetNodeCount(); i++)
         {
-            Vector3 doorpos = new Vector3(graph.GetNodes()[i].center.x, 0, graph.GetNodes()[i].center.y);
-            DebugExtension.DebugWireSphere(doorpos, Color.blue, 1.5f);
+            Vector3 nodePos = new Vector3(graph.GetNodes()[i].center.x, 0, graph.GetNodes()[i].center.y);
+            DebugExtension.DebugWireSphere(nodePos, Color.blue, 1.5f);
 
-            for (int j = 0; j < graph.GetNeighbors(graph.GetNodes()[i]).Count; j++)
-            {
-                Vector3 roomPos = new Vector3(graph.GetNeighbors(graph.GetNodes()[i])[j].center.x, 0, graph.GetNeighbors(graph.GetNodes()[i])[j].center.y); ;
-                Debug.DrawLine(doorpos, roomPos, Color.yellow);
-            }
+            //for (int j = 0; j < graph.GetNeighbors(graph.GetNodes()[i]).Count; j++)
+            //{
+            //    Vector3 roomPos = new Vector3(graph.GetNeighbors(graph.GetNodes()[i])[j].center.x, 0, graph.GetNeighbors(graph.GetNodes()[i])[j].center.y); ;
+            //    Debug.DrawLine(doorpos, roomPos, Color.yellow);
+            //}
         }
 
 
@@ -90,6 +90,7 @@ public class DungeonGenerator : MonoBehaviour
         roomsToSplit.Clear(); roomsToDraw.Clear(); Doors.Clear();
         Destroy(WallsParent); Destroy(FloorParent);
         graph.Clear();
+        navMeshSurface.RemoveData();
 
         roomsToSplit.Add(startRoom);
         drawCoroutine = StartCoroutine(DrawCoroutine());
@@ -133,20 +134,16 @@ public class DungeonGenerator : MonoBehaviour
             }
         }
 
-        for (int i = 0; i < roomsToDraw.Count; i++)
-        {
-            for (int j = i + 1; j < roomsToDraw.Count; j++)
-            {
-                //graph.AddEdge(roomsToDraw[i], roomsToDraw[j]);
-                //yield return new WaitForSeconds(0.1f);
-            }
-        }
+        //Remove rooms
+
+        
 
         graph.BFS(graph.GetNodes()[0]);
 
         Debug.Log("drawing is done; Total room count: " + roomsToDraw.Count + "|  total Intersections: " + Doors.Count);
 
     }
+
     void SplitRooms(RectInt pRoom)
     {
         RectInt room1, room2; int splitRandom;
@@ -189,7 +186,34 @@ public class DungeonGenerator : MonoBehaviour
 
         Doors.Add(door);
         graph.AddEdge(door, room1); graph.AddEdge(door, room2);
+    }
 
+    public int BFS()
+    {
+        HashSet<RectInt> discovered = new HashSet<RectInt>();
+        Queue<RectInt> Q = new Queue<RectInt>();
+
+        bool isConnected = false;
+
+        Q.Enqueue(graph.GetNodes()[0]);
+        discovered.Add(graph.GetNodes()[0]);
+
+        while (Q.Count > 0)
+        {
+            graph.GetNodes()[0] = Q.Dequeue();
+            Debug.Log(graph.GetNodes()[0]);
+            foreach (RectInt w in graph.GetNeighbors(graph.GetNodes()[0]))
+            {
+                if (!discovered.Contains(w))
+                {
+                    Q.Enqueue(w);
+                    discovered.Add(w);
+                }
+            }
+        }
+        isConnected = discovered.Count == graph.GetNodeCount();
+        Debug.Log(isConnected);
+        return discovered.Count;
     }
 
     /// <summary> Assests
@@ -213,15 +237,14 @@ public class DungeonGenerator : MonoBehaviour
         }
         for (int i = 0; i < roomsToDraw.Count; i++)
         {
-            
             spawnroom(roomsToDraw[i]);
         }
         CreateFloor();
     }
+
     private void spawnroom(RectInt rectInt)
     {
         //Debug.Log(rectInt);
-
         GameObject parentGameObject = new GameObject("Room: " + rectInt.position);
         Wallparents.Add(parentGameObject);
 
@@ -244,6 +267,7 @@ public class DungeonGenerator : MonoBehaviour
                 Walls.Add(postition);
             }
         }
+
         for (int i = 0; i < rectInt.width; i++)
         {
             Vector2 postition = new Vector2(rectInt.x + i, rectInt.y);

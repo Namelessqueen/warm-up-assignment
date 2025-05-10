@@ -84,13 +84,13 @@ public class Graph<T>
             Debug.Log($"{node.Key}: {string.Join(", ", node.Value)}");
         }
     }
-    
+
     // Breadth-First Search (BFS)
     public void BFS(T v)
     {
         HashSet<T> discovered = new HashSet<T>();
         Queue<T> Q = new Queue<T>();
-        
+
         bool isConnected = false;
 
         Q.Enqueue(v);
@@ -99,7 +99,6 @@ public class Graph<T>
         while (Q.Count > 0)
         {
             v = Q.Dequeue();
-            Debug.Log(v);
             foreach (T w in GetNeighbors(v))
             {
                 if (!discovered.Contains(w))

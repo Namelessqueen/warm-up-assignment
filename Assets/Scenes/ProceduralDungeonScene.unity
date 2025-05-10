@@ -522,7 +522,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 7886968593073390716, guid: 16a34199e3b99f1479d7826f1c8782fc, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -735,7 +736,7 @@ GameObject:
   - component: {fileID: 1896140450}
   - component: {fileID: 1896140449}
   m_Layer: 0
-  m_Name: ' Dungeon Generator'
+  m_Name: Dungeon Generator
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
