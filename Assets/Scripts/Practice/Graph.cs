@@ -86,7 +86,7 @@ public class Graph<T>
     }
 
     // Breadth-First Search (BFS)
-    public void BFS(T v)
+    public bool BFS(T v)
     {
         HashSet<T> discovered = new HashSet<T>();
         Queue<T> Q = new Queue<T>();
@@ -110,6 +110,7 @@ public class Graph<T>
         }
         isConnected = discovered.Count == GetNodeCount();
         Debug.Log(isConnected);
+        return isConnected;
     }
 
     // Depth-First Search (DFS)

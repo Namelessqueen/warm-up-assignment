@@ -1,11 +1,15 @@
 using NaughtyAttributes;
 using NUnit.Framework;
+using NUnit.Framework.Internal;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.AI.Navigation;
 using Unity.VisualScripting;
 using UnityEditor;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class DungeonGenerator : MonoBehaviour
 {
@@ -74,11 +78,11 @@ public class DungeonGenerator : MonoBehaviour
             Vector3 nodePos = new Vector3(graph.GetNodes()[i].center.x, 0, graph.GetNodes()[i].center.y);
             DebugExtension.DebugWireSphere(nodePos, Color.blue, 1.5f);
 
-            //for (int j = 0; j < graph.GetNeighbors(graph.GetNodes()[i]).Count; j++)
-            //{
-            //    Vector3 roomPos = new Vector3(graph.GetNeighbors(graph.GetNodes()[i])[j].center.x, 0, graph.GetNeighbors(graph.GetNodes()[i])[j].center.y); ;
-            //    Debug.DrawLine(doorpos, roomPos, Color.yellow);
-            //}
+            for (int j = 0; j < graph.GetNeighbors(graph.GetNodes()[i]).Count; j++)
+            {
+                Vector3 roomPos = new Vector3(graph.GetNeighbors(graph.GetNodes()[i])[j].center.x, 0, graph.GetNeighbors(graph.GetNodes()[i])[j].center.y); ;
+                Debug.DrawLine(nodePos, roomPos, Color.yellow);
+            }
         }
 
 
@@ -115,7 +119,7 @@ public class DungeonGenerator : MonoBehaviour
             }
             else SplitRooms(currentRoom);
 
-            if(!skipCoroutine)yield return new WaitForSeconds(0.1f);
+            if (!skipCoroutine) yield return new WaitForSeconds(0.1f);
         }
 
         for (int i = 0; i < roomsToDraw.Count; i++)
@@ -134,14 +138,59 @@ public class DungeonGenerator : MonoBehaviour
             }
         }
 
-        //Remove rooms
-
-        
-
-        graph.BFS(graph.GetNodes()[0]);
-
         Debug.Log("drawing is done; Total room count: " + roomsToDraw.Count + "|  total Intersections: " + Doors.Count);
 
+    }
+
+
+    [Button]
+    void RemoveSmallest()
+    {
+        Graph<RectInt> GraphCopy = new Graph<RectInt>();
+
+        foreach (RectInt entry in graph.GetNodes())
+        {
+            //GraphCopy.AddNode(entry.Key, new List<int>(entry.Value));
+        }
+
+        Debug.Log(GraphCopy.GetNodeCount());
+        //Remove rooms
+        Dictionary<RectInt, int> roomSize = new Dictionary<RectInt, int>();
+      
+        for (int i = 0; i < roomsToDraw.Count; i++)
+        {
+            roomSize.Add(roomsToDraw[i], roomsToDraw[i].width * roomsToDraw[i].height);
+        }
+        
+        bool connected = true;
+        for (int i = 0; i < roomsToDraw.Count/5 && connected; i++)
+        {
+            var minRoom = roomSize.OrderBy(kvp => kvp.Value).First();
+
+            foreach (var neighbor in graph.GetNeighbors(minRoom.Key))
+            {
+                graph.RemoveNode(neighbor);
+                Doors.Remove(neighbor);
+            }
+
+            graph.RemoveNode(minRoom.Key);
+
+            if (!graph.BFS(roomSize.OrderByDescending(x => x.Value).First().Key))
+            {
+                connected = false;
+                ;
+                Debug.Log("removal stopped");
+            }
+            else
+            {
+                roomsToDraw.Remove(minRoom.Key);
+                roomSize.Remove(minRoom.Key);
+            }
+            
+            //Debug.Log($"\"{minRoom.Key}\" : \"{minRoom.Value}\"");
+        }
+        Debug.Log(GraphCopy.GetNodeCount());
+        Debug.Log(graph.GetNodeCount());
     }
 
     void SplitRooms(RectInt pRoom)
@@ -188,33 +237,6 @@ public class DungeonGenerator : MonoBehaviour
         graph.AddEdge(door, room1); graph.AddEdge(door, room2);
     }
 
-    public int BFS()
-    {
-        HashSet<RectInt> discovered = new HashSet<RectInt>();
-        Queue<RectInt> Q = new Queue<RectInt>();
-
-        bool isConnected = false;
-
-        Q.Enqueue(graph.GetNodes()[0]);
-        discovered.Add(graph.GetNodes()[0]);
-
-        while (Q.Count > 0)
-        {
-            graph.GetNodes()[0] = Q.Dequeue();
-            Debug.Log(graph.GetNodes()[0]);
-            foreach (RectInt w in graph.GetNeighbors(graph.GetNodes()[0]))
-            {
-                if (!discovered.Contains(w))
-                {
-                    Q.Enqueue(w);
-                    discovered.Add(w);
-                }
-            }
-        }
-        isConnected = discovered.Count == graph.GetNodeCount();
-        Debug.Log(isConnected);
-        return discovered.Count;
-    }
 
     /// <summary> Assests
     /// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
