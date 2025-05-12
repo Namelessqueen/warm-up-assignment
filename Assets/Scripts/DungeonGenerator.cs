@@ -8,8 +8,10 @@ using Unity.AI.Navigation;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
+using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UIElements;
 
 public class DungeonGenerator : MonoBehaviour
 {
@@ -146,14 +148,6 @@ public class DungeonGenerator : MonoBehaviour
     [Button]
     void RemoveSmallest()
     {
-        Graph<RectInt> GraphCopy = new Graph<RectInt>();
-
-        foreach (RectInt entry in graph.GetNodes())
-        {
-            //GraphCopy.AddNode(entry.Key, new List<int>(entry.Value));
-        }
-
-        Debug.Log(GraphCopy.GetNodeCount());
         //Remove rooms
         Dictionary<RectInt, int> roomSize = new Dictionary<RectInt, int>();
       
@@ -166,31 +160,32 @@ public class DungeonGenerator : MonoBehaviour
         for (int i = 0; i < roomsToDraw.Count/5 && connected; i++)
         {
             var minRoom = roomSize.OrderBy(kvp => kvp.Value).First();
+            List<RectInt> tempDoors = new List<RectInt>();
 
             foreach (var neighbor in graph.GetNeighbors(minRoom.Key))
             {
                 graph.RemoveNode(neighbor);
-                Doors.Remove(neighbor);
+                tempDoors.Add(neighbor);
             }
-
             graph.RemoveNode(minRoom.Key);
 
             if (!graph.BFS(roomSize.OrderByDescending(x => x.Value).First().Key))
             {
                 connected = false;
-                ;
                 Debug.Log("removal stopped");
             }
             else
             {
+                foreach(var door in tempDoors)
+                {
+                    Doors.Remove(door);
+                }
                 roomsToDraw.Remove(minRoom.Key);
                 roomSize.Remove(minRoom.Key);
             }
             
             //Debug.Log($"\"{minRoom.Key}\" : \"{minRoom.Value}\"");
         }
-        Debug.Log(GraphCopy.GetNodeCount());
-        Debug.Log(graph.GetNodeCount());
     }
 
     void SplitRooms(RectInt pRoom)
@@ -315,23 +310,29 @@ public class DungeonGenerator : MonoBehaviour
 
     public void CreateFloor()
     {
+        
         GameObject parentGameObject = new GameObject("ParentFloor");
         for (int i = 0; i < roomsToDraw.Count; i++)
         {
+            GameObject parentfloor = new GameObject("ParentFloor" + roomsToDraw[i].position);
+            //FloorParent.Add(parentfloor);
             for (int j = 1; j < roomsToDraw[i].width - 1; j++)
             {
                 for (int k = 1; k < roomsToDraw[i].height - 1; k++)
                 {
-                    Instantiate(FloorPrefab, new Vector3(j + roomsToDraw[i].x, 0, k + roomsToDraw[i].y), FloorPrefab.transform.rotation, parentGameObject.transform);
+                    
+                    var newObject = Instantiate(FloorPrefab, new Vector3(j + roomsToDraw[i].x, 0, k + roomsToDraw[i].y), FloorPrefab.transform.rotation, parentfloor.transform);
+                    newObject.name = "Floor: " + newObject.transform.position;
                 }
             }
         }
         for(int i = 0;i < Doors.Count; i++)
         {
-            Instantiate(FloorPrefab, new Vector3(Doors[i].x, 0, Doors[i].y), FloorPrefab.transform.rotation, parentGameObject.transform);
+            var newObject = Instantiate(FloorPrefab, new Vector3(Doors[i].x, 0, Doors[i].y), FloorPrefab.transform.rotation, parentGameObject.transform);
 
             if(Doors[i].height > 1) Instantiate(FloorPrefab, new Vector3(Doors[i].x, 0, Doors[i].y + 1), FloorPrefab.transform.rotation, parentGameObject.transform);
             else if (Doors[i].width > 1) Instantiate(FloorPrefab, new Vector3(Doors[i].x+1, 0, Doors[i].y), FloorPrefab.transform.rotation, parentGameObject.transform);
+            newObject.name = "Floor: " + newObject.transform.position;
         }
         parentGameObject.transform.parent = FloorParent.transform;
         parentGameObject.transform.position = new Vector3(0.5f, 0, 0.5f);
