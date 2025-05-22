@@ -17,4 +17,9 @@ public class PlayerController : MonoBehaviour
         navMeshAgent.SetDestination(destination);
     }
 
+    public void ResetDestination(Vector3 pos)
+    {
+        navMeshAgent.Warp(pos);
+    }
+
 }

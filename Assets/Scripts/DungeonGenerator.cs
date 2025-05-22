@@ -38,6 +38,8 @@ public class DungeonGenerator : MonoBehaviour
     [SerializeField]
     private GameObject WallPrefab;
 
+    public GameObject Player;
+
     private GameObject WallsParent;
     private GameObject FloorParent;
 
@@ -100,10 +102,9 @@ public class DungeonGenerator : MonoBehaviour
         StopAllCoroutines();
         roomsToSplit.Clear(); roomsToDraw.Clear(); Doors.Clear();
         Destroy(WallsParent); Destroy(FloorParent);
-        graph.Clear();
+        graph.Clear(); 
         navMeshSurface.RemoveData();
 
-        
         roomsToSplit.Add(startRoom);
         drawCoroutine = StartCoroutine(DrawCoroutine());
     }
@@ -172,7 +173,10 @@ public class DungeonGenerator : MonoBehaviour
             if (!skipCoroutine) yield return new WaitForSeconds(0.1f);
         }
         CreateFloor();
+
         navMeshSurface.BuildNavMesh();
+        Player.GetComponent<PlayerController>().ResetDestination(new Vector3(roomsToDraw[0].center.x, 5f, roomsToDraw[0].center.y));
+
         Debug.Log("Done");
     }
 

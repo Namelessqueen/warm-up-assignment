@@ -23,7 +23,7 @@ public class MouseClickController : MonoBehaviour
             } 
         }
 
-        if(lastClicked != new Vector3(0,0,0))
+        if (lastClicked != new Vector3(0,0,0))
         {
             Debug.DrawLine(transform.position, lastClicked, Color.yellow);
             DebugExtension.DebugWireSphere(lastClicked, Color.blue);
