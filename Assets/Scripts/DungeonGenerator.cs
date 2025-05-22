@@ -288,10 +288,8 @@ public class DungeonGenerator : MonoBehaviour
         for (int i = 0; i < rectInt.width; i++)
         {
             Vector2 postition = new Vector2(rectInt.x + i, rectInt.y);
-
             if (!Walls.Contains(postition))
             {
-
                 var newObject = Instantiate(WallPrefab, new Vector3(postition.x, 0, postition.y), Quaternion.identity, parentGameObject.transform);
                 newObject.name = "Wall: " + postition;
                 Walls.Add(postition);
@@ -310,12 +308,10 @@ public class DungeonGenerator : MonoBehaviour
 
     public void CreateFloor()
     {
-        
-        GameObject parentGameObject = new GameObject("ParentFloor");
         for (int i = 0; i < roomsToDraw.Count; i++)
         {
             GameObject parentfloor = new GameObject("ParentFloor" + roomsToDraw[i].position);
-            //FloorParent.Add(parentfloor);
+            parentfloor.transform.parent = FloorParent.transform;
             for (int j = 1; j < roomsToDraw[i].width - 1; j++)
             {
                 for (int k = 1; k < roomsToDraw[i].height - 1; k++)
@@ -326,16 +322,17 @@ public class DungeonGenerator : MonoBehaviour
                 }
             }
         }
-        for(int i = 0;i < Doors.Count; i++)
+        GameObject parentfloordoors = new GameObject("ParentFloor Doors");
+        parentfloordoors.transform.parent = FloorParent.transform;
+        for (int i = 0;i < Doors.Count; i++)
         {
-            var newObject = Instantiate(FloorPrefab, new Vector3(Doors[i].x, 0, Doors[i].y), FloorPrefab.transform.rotation, parentGameObject.transform);
+            var newObject = Instantiate(FloorPrefab, new Vector3(Doors[i].x, 0, Doors[i].y), FloorPrefab.transform.rotation, parentfloordoors.transform);
 
-            if(Doors[i].height > 1) Instantiate(FloorPrefab, new Vector3(Doors[i].x, 0, Doors[i].y + 1), FloorPrefab.transform.rotation, parentGameObject.transform);
-            else if (Doors[i].width > 1) Instantiate(FloorPrefab, new Vector3(Doors[i].x+1, 0, Doors[i].y), FloorPrefab.transform.rotation, parentGameObject.transform);
+            if(Doors[i].height > 1) Instantiate(FloorPrefab, new Vector3(Doors[i].x, 0, Doors[i].y + 1), FloorPrefab.transform.rotation, parentfloordoors.transform);
+            else if (Doors[i].width > 1) Instantiate(FloorPrefab, new Vector3(Doors[i].x+1, 0, Doors[i].y), FloorPrefab.transform.rotation, parentfloordoors.transform);
             newObject.name = "Floor: " + newObject.transform.position;
         }
-        parentGameObject.transform.parent = FloorParent.transform;
-        parentGameObject.transform.position = new Vector3(0.5f, 0, 0.5f);
+        FloorParent.transform.position = new Vector3(0.5f, 0, 0.5f);
     }
 
     [Button]
