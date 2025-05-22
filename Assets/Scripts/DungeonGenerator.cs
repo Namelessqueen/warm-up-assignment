@@ -12,9 +12,12 @@ using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
+using static UnityEditor.PlayerSettings;
 
 public class DungeonGenerator : MonoBehaviour
 {
+    public int seed;
+
     public RectInt startRoom;
     public Vector2 minRoomSizeRage = new Vector2(10, 20);
     Graph<RectInt> graph = new Graph<RectInt>();
@@ -93,17 +96,20 @@ public class DungeonGenerator : MonoBehaviour
     [Button]
     public void CreateDungeon()
     {
+        if (seed != 0) Random.InitState(seed);
+        StopAllCoroutines();
         roomsToSplit.Clear(); roomsToDraw.Clear(); Doors.Clear();
         Destroy(WallsParent); Destroy(FloorParent);
         graph.Clear();
         navMeshSurface.RemoveData();
 
+        
         roomsToSplit.Add(startRoom);
         drawCoroutine = StartCoroutine(DrawCoroutine());
     }
+
     IEnumerator DrawCoroutine()
     {
-
         //Rooms
         yield return new WaitForEndOfFrame();
         Debug.Log("coroutine start");
@@ -142,6 +148,32 @@ public class DungeonGenerator : MonoBehaviour
 
         Debug.Log("drawing is done; Total room count: " + roomsToDraw.Count + "|  total Intersections: " + Doors.Count);
 
+        RemoveSmallest();
+        if (!skipCoroutine) yield return new WaitForSeconds(0.3f);
+
+        //SpawnDungeonAssets();
+
+        Destroy(WallsParent);
+        Destroy(FloorParent);
+        Wallparents.Clear(); Walls.Clear();
+
+        WallsParent = new GameObject("WallParent");
+        FloorParent = new GameObject("ParentFloor");
+
+        for (int i = 0; i < Doors.Count; i++)
+        {
+            Walls.Add(Doors[i].position);
+            if (Doors[i].height > 1) Walls.Add(new Vector2(Doors[i].x, Doors[i].y + 1));
+            else if (Doors[i].width > 1) Walls.Add(new Vector2(Doors[i].x + 1, Doors[i].y));
+        }
+        for (int i = 0; i < roomsToDraw.Count; i++)
+        {
+            spawnroom(roomsToDraw[i]);
+            if (!skipCoroutine) yield return new WaitForSeconds(0.1f);
+        }
+        CreateFloor();
+        navMeshSurface.BuildNavMesh();
+        Debug.Log("Done");
     }
 
 
@@ -155,11 +187,10 @@ public class DungeonGenerator : MonoBehaviour
         {
             roomSize.Add(roomsToDraw[i], roomsToDraw[i].width * roomsToDraw[i].height);
         }
-        
         bool connected = true;
-        for (int i = 0; i < roomsToDraw.Count/5 && connected; i++)
+        for (int i = 0; i < roomsToDraw.Count/5 && connected; i++) // did 20% for a better effect
         {
-            var minRoom = roomSize.OrderBy(kvp => kvp.Value).First();
+            var minRoom = roomSize.OrderBy(kvp => kvp.Value).First();  //Got this line from the internet (Gets min value)
             List<RectInt> tempDoors = new List<RectInt>();
 
             foreach (var neighbor in graph.GetNeighbors(minRoom.Key))
@@ -169,7 +200,7 @@ public class DungeonGenerator : MonoBehaviour
             }
             graph.RemoveNode(minRoom.Key);
 
-            if (!graph.BFS(roomSize.OrderByDescending(x => x.Value).First().Key))
+            if (!graph.BFS(roomSize.OrderByDescending(x => x.Value).First().Key)) //Got this line from the internet (Gets max value)
             {
                 connected = false;
                 Debug.Log("removal stopped");
@@ -183,7 +214,6 @@ public class DungeonGenerator : MonoBehaviour
                 roomsToDraw.Remove(minRoom.Key);
                 roomSize.Remove(minRoom.Key);
             }
-            
             //Debug.Log($"\"{minRoom.Key}\" : \"{minRoom.Value}\"");
         }
     }
@@ -271,17 +301,12 @@ public class DungeonGenerator : MonoBehaviour
 
             if (!Walls.Contains(postition))
             {
-                var newObject = Instantiate(WallPrefab, new Vector3(postition.x, 0, postition.y), Quaternion.identity, parentGameObject.transform);
-                newObject.name = "Wall: " + postition;
-                Walls.Add(postition);
+                WallPrefabsInstantiate(postition, parentGameObject);
             }
-
             postition = new Vector2(rectInt.x + rectInt.width - 1, rectInt.y + i);
             if (!Walls.Contains(postition))
             {
-                var newObject = Instantiate(WallPrefab, new Vector3(postition.x, 0, postition.y), Quaternion.identity, parentGameObject.transform);
-                newObject.name = "Wall: " + postition;
-                Walls.Add(postition);
+                WallPrefabsInstantiate(postition, parentGameObject);
             }
         }
 
@@ -290,20 +315,23 @@ public class DungeonGenerator : MonoBehaviour
             Vector2 postition = new Vector2(rectInt.x + i, rectInt.y);
             if (!Walls.Contains(postition))
             {
-                var newObject = Instantiate(WallPrefab, new Vector3(postition.x, 0, postition.y), Quaternion.identity, parentGameObject.transform);
-                newObject.name = "Wall: " + postition;
-                Walls.Add(postition);
+                WallPrefabsInstantiate(postition, parentGameObject);
             }
             postition = new Vector2(rectInt.x + i, rectInt.y + rectInt.height - 1);
             if (!Walls.Contains(postition))
             {
-                var newObject = Instantiate(WallPrefab, new Vector3(postition.x, 0, postition.y), Quaternion.identity, parentGameObject.transform);
-                newObject.name = "Wall: " + postition;
-                Walls.Add(postition);
+                WallPrefabsInstantiate(postition, parentGameObject);
             }
         }
         parentGameObject.transform.position = new Vector3(0.5f, 0.5f, 0.5f);
         parentGameObject.transform.parent = WallsParent.transform;
+    }
+
+    public void WallPrefabsInstantiate(Vector2 Pos, GameObject Parent)
+    {
+        var newObject = Instantiate(WallPrefab, new Vector3(Pos.x, 0, Pos.y), Quaternion.identity, Parent.transform);
+        newObject.name = "Wall: " + Pos;
+        Walls.Add(Pos);
     }
 
     public void CreateFloor()
@@ -333,12 +361,6 @@ public class DungeonGenerator : MonoBehaviour
             newObject.name = "Floor: " + newObject.transform.position;
         }
         FloorParent.transform.position = new Vector3(0.5f, 0, 0.5f);
-    }
-
-    [Button]
-    public void NavMeshSurface()
-    {
-        navMeshSurface.BuildNavMesh();
     }
 
 }
