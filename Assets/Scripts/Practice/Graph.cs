@@ -109,7 +109,6 @@ public class Graph<T>
             }
         }
         isConnected = discovered.Count == GetNodeCount();
-        Debug.Log(isConnected);
         return isConnected;
     }
 
