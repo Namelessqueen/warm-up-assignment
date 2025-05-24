@@ -11,27 +11,28 @@ using UnityEditor.Experimental.GraphView;
 using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 using UnityEngine.UIElements;
 using static UnityEditor.PlayerSettings;
 
 public class DungeonGenerator : MonoBehaviour
 {
-    public int seed;
+    public int _seed;
 
-    public RectInt startRoom;
-    public Vector2 minRoomSizeRage = new Vector2(10, 20);
-    Graph<RectInt> graph = new Graph<RectInt>();
+    public RectInt _startRoom;
+    public Vector2 _minRoomSizeRage = new Vector2(10, 20);
+    Graph<RectInt> _graph = new Graph<RectInt>();
 
     Coroutine drawCoroutine;
-    List<RectInt> roomsToDraw = new List<RectInt>();
-    List<RectInt> roomsToSplit = new List<RectInt>();
-    List<RectInt> Doors = new List<RectInt>();
+    List<RectInt> _roomsToDraw = new List<RectInt>();
+    List<RectInt> _roomsToSplit = new List<RectInt>();
+    List<RectInt> _doors = new List<RectInt>();
 
-    public bool skipCoroutine = false;
+    public bool SkipCoroutine = false;
 
 
-    private List<Vector2> Walls = new List<Vector2>();
-    private List<GameObject> Wallparents = new List<GameObject>();
+    private List<Vector2> _walls = new List<Vector2>();
+    private List<GameObject> _wallparents = new List<GameObject>();
 
     [SerializeField]
     private GameObject FloorPrefab;
@@ -43,14 +44,14 @@ public class DungeonGenerator : MonoBehaviour
     private GameObject WallsParent;
     private GameObject FloorParent;
 
-    NavMeshSurface navMeshSurface;
+    NavMeshSurface _navMeshSurface;
 
 
     void Start()
     {
-        roomsToSplit.Add(startRoom);
+        _roomsToSplit.Add(_startRoom);
         drawCoroutine = StartCoroutine(DrawCoroutine());
-        navMeshSurface = FindAnyObjectByType<NavMeshSurface>();
+        _navMeshSurface = FindAnyObjectByType<NavMeshSurface>();
     }
 
     void Update()
@@ -61,51 +62,49 @@ public class DungeonGenerator : MonoBehaviour
     void Drawing()
     {
         //Rooms
-        AlgorithmsUtils.DebugRectInt(startRoom, Color.red);
+        AlgorithmsUtils.DebugRectInt(_startRoom, Color.red);
 
-        for (int i = 0; i < roomsToSplit.Count; i++)
+        for (int i = 0; i < _roomsToSplit.Count; i++)
         {
-            AlgorithmsUtils.DebugRectInt(roomsToSplit[i], Color.red);
+            AlgorithmsUtils.DebugRectInt(_roomsToSplit[i], Color.red);
         }
 
-        for (int i = 0; i < roomsToDraw.Count; i++)
+        for (int i = 0; i < _roomsToDraw.Count; i++)
         {
-            AlgorithmsUtils.DebugRectInt(roomsToDraw[i], Color.green);
+            AlgorithmsUtils.DebugRectInt(_roomsToDraw[i], Color.green);
         }
 
         //Doors
-        for (int i = 0; i < Doors.Count; i++)
+        for (int i = 0; i < _doors.Count; i++)
         {
-            AlgorithmsUtils.DebugRectInt(Doors[i], Color.cyan);
+            AlgorithmsUtils.DebugRectInt(_doors[i], Color.cyan);
         }
 
         //Nodes
-        for (int i = 0; i < graph.GetNodeCount(); i++)
+        for (int i = 0; i < _graph.GetNodeCount(); i++)
         {
-            Vector3 nodePos = new Vector3(graph.GetNodes()[i].center.x, 0, graph.GetNodes()[i].center.y);
+            Vector3 nodePos = new Vector3(_graph.GetNodes()[i].center.x, 0, _graph.GetNodes()[i].center.y);
             DebugExtension.DebugWireSphere(nodePos, Color.blue, 1.5f);
 
-            for (int j = 0; j < graph.GetNeighbors(graph.GetNodes()[i]).Count; j++)
+            for (int j = 0; j < _graph.GetNeighbors(_graph.GetNodes()[i]).Count; j++)
             {
-                Vector3 roomPos = new Vector3(graph.GetNeighbors(graph.GetNodes()[i])[j].center.x, 0, graph.GetNeighbors(graph.GetNodes()[i])[j].center.y); ;
+                Vector3 roomPos = new Vector3(_graph.GetNeighbors(_graph.GetNodes()[i])[j].center.x, 0, _graph.GetNeighbors(_graph.GetNodes()[i])[j].center.y); ;
                 Debug.DrawLine(nodePos, roomPos, Color.yellow);
             }
         }
-
-
     }
 
     [Button]
     public void CreateDungeon()
     {
-        if (seed != 0) Random.InitState(seed);
+        if (seed != 0) Random.InitState(_seed);
         StopAllCoroutines();
-        roomsToSplit.Clear(); roomsToDraw.Clear(); Doors.Clear();
+        _roomsToSplit.Clear(); _roomsToDraw.Clear(); _doors.Clear();
         Destroy(WallsParent); Destroy(FloorParent);
-        graph.Clear(); 
-        navMeshSurface.RemoveData();
+        _graph.Clear(); 
+        _navMeshSurface.RemoveData();
 
-        roomsToSplit.Add(startRoom);
+        _roomsToSplit.Add(_startRoom);
         drawCoroutine = StartCoroutine(DrawCoroutine());
     }
 
@@ -115,112 +114,75 @@ public class DungeonGenerator : MonoBehaviour
         yield return new WaitForEndOfFrame();
         Debug.Log("coroutine start");
 
-        while (roomsToSplit.Count > 0)
+        while (_roomsToSplit.Count > 0)
         {
-            RectInt currentRoom = roomsToSplit[0];
-            roomsToSplit.Remove(currentRoom);
+            RectInt currentRoom = _roomsToSplit[0];
+            _roomsToSplit.Remove(currentRoom);
 
-            int minRoomSizeRange = Random.Range((int)minRoomSizeRage.x, (int)minRoomSizeRage.y);
+            int minRoomSizeRange = Random.Range((int)_minRoomSizeRage.x, (int)_minRoomSizeRage.y);
 
             if (currentRoom.width < minRoomSizeRange * 2 && currentRoom.height < minRoomSizeRange * 2)
             {
-                roomsToDraw.Add(currentRoom);
+                _roomsToDraw.Add(currentRoom);
             }
             else SplitRooms(currentRoom);
 
-            if (!skipCoroutine) yield return new WaitForSeconds(0.1f);
+            if (!SkipCoroutine) yield return new WaitForSeconds(0.1f);
         }
 
-        for (int i = 0; i < roomsToDraw.Count; i++)
+        //_doors
+        for (int i = 0; i < _roomsToDraw.Count; i++)
         {
-            for (int j = i + 1; j < roomsToDraw.Count; j++)
+            for (int j = i + 1; j < _roomsToDraw.Count; j++)
             {
-                if (AlgorithmsUtils.Intersects(roomsToDraw[i], roomsToDraw[j]))
+                if (AlgorithmsUtils.Intersects(_roomsToDraw[i], _roomsToDraw[j]))
                 {
-                    RectInt Inter = AlgorithmsUtils.Intersect(roomsToDraw[i], roomsToDraw[j]);
+                    RectInt Inter = AlgorithmsUtils.Intersect(_roomsToDraw[i], _roomsToDraw[j]);
                     if ((Inter.width == 1 && Inter.height > 5) || (Inter.height == 1 && Inter.width > 5))
                     {
-                        MakeDoor(roomsToDraw[i], roomsToDraw[j]);
-                        if (!skipCoroutine) yield return new WaitForSeconds(0.1f);
+                        MakeDoor(_roomsToDraw[i], _roomsToDraw[j]);
+                        if (!SkipCoroutine) yield return new WaitForSeconds(0.1f);
                     }
                 }
             }
         }
+        if (_graph.BFS(_roomsToDraw[0])) Debug.Log("Rooms are all connected");
+        else Debug.LogError("Rooms are all connected");
 
-        Debug.Log("drawing is done; Total room count: " + roomsToDraw.Count + "|  total Intersections: " + Doors.Count);
+        Debug.Log("drawing is done; Total room count: " + _roomsToDraw.Count + "|  total Intersections: " + _doors.Count);
 
+        //RemoveSmallest
         RemoveSmallest();
-        if (!skipCoroutine) yield return new WaitForSeconds(0.3f);
+        if (!SkipCoroutine) yield return new WaitForSeconds(0.3f);
 
-        //SpawnDungeonAssets();
-
+        //Assets
         Destroy(WallsParent);
         Destroy(FloorParent);
-        Wallparents.Clear(); Walls.Clear();
+        _wallparents.Clear(); _walls.Clear();
 
         WallsParent = new GameObject("WallParent");
         FloorParent = new GameObject("ParentFloor");
 
-        for (int i = 0; i < Doors.Count; i++)
+        for (int i = 0; i < _doors.Count; i++)
         {
-            Walls.Add(Doors[i].position);
-            if (Doors[i].height > 1) Walls.Add(new Vector2(Doors[i].x, Doors[i].y + 1));
-            else if (Doors[i].width > 1) Walls.Add(new Vector2(Doors[i].x + 1, Doors[i].y));
+            _walls.Add(_doors[i].position);
+            if (_doors[i].height > 1) _walls.Add(new Vector2(_doors[i].x, _doors[i].y + 1));
+            else if (_doors[i].width > 1) _walls.Add(new Vector2(_doors[i].x + 1, _doors[i].y));
         }
-        for (int i = 0; i < roomsToDraw.Count; i++)
+        for (int i = 0; i < _roomsToDraw.Count; i++)
         {
-            spawnroom(roomsToDraw[i]);
-            if (!skipCoroutine) yield return new WaitForSeconds(0.1f);
+            spawnroom(_roomsToDraw[i]);
+            if (!SkipCoroutine) yield return new WaitForSeconds(0.1f);
         }
+
         CreateFloor();
 
-        navMeshSurface.BuildNavMesh();
-        Player.GetComponent<PlayerController>().ResetDestination(new Vector3(roomsToDraw[0].center.x, 5f, roomsToDraw[0].center.y));
+        _navMeshSurface.BuildNavMesh();
+        Player.GetComponent<PlayerController>().ResetDestination(new Vector3(_roomsToDraw[0].center.x, 5f, _roomsToDraw[0].center.y));
 
         Debug.Log("Done");
     }
 
-
-    [Button]
-    void RemoveSmallest()
-    {
-        //Remove rooms
-        Dictionary<RectInt, int> roomSize = new Dictionary<RectInt, int>();
-      
-        for (int i = 0; i < roomsToDraw.Count; i++)
-        {
-            roomSize.Add(roomsToDraw[i], roomsToDraw[i].width * roomsToDraw[i].height);
-        }
-        bool connected = true;
-        for (int i = 0; i < roomsToDraw.Count/5 && connected; i++) // did 20% for a better effect
-        {
-            var minRoom = roomSize.OrderBy(kvp => kvp.Value).First();  //Got this line from the internet (Gets min value)
-            List<RectInt> tempDoors = new List<RectInt>();
-
-            foreach (var neighbor in graph.GetNeighbors(minRoom.Key))
-            {
-                graph.RemoveNode(neighbor);
-                tempDoors.Add(neighbor);
-            }
-            graph.RemoveNode(minRoom.Key);
-
-            if (!graph.BFS(roomSize.OrderByDescending(x => x.Value).First().Key)) //Got this line from the internet (Gets max value)
-            {
-                connected = false;
-                Debug.Log("removal stopped");
-            }
-            else
-            {
-                foreach(var door in tempDoors)
-                {
-                    Doors.Remove(door);
-                }
-                roomsToDraw.Remove(minRoom.Key);
-                roomSize.Remove(minRoom.Key);
-            }
-            //Debug.Log($"\"{minRoom.Key}\" : \"{minRoom.Value}\"");
-        }
-    }
 
     void SplitRooms(RectInt pRoom)
     {
@@ -228,22 +190,22 @@ public class DungeonGenerator : MonoBehaviour
 
         if (pRoom.width >= pRoom.height)//vertical
         {
-            splitRandom = Random.Range((int)minRoomSizeRage.x, pRoom.width - (int)minRoomSizeRage.x);
+            splitRandom = Random.Range((int)_minRoomSizeRage.x, pRoom.width - (int)_minRoomSizeRage.x);
 
             room1 = new RectInt(pRoom.x, pRoom.y, splitRandom + 1, pRoom.height);
             room2 = new RectInt(pRoom.x + splitRandom, pRoom.y, pRoom.width - splitRandom, pRoom.height);
         }
         else//horizontal
         {
-            splitRandom = Random.Range((int)minRoomSizeRage.x, pRoom.height - (int)minRoomSizeRage.x);
+            splitRandom = Random.Range((int)_minRoomSizeRage.x, pRoom.height - (int)_minRoomSizeRage.x);
 
             room1 = new RectInt(pRoom.x, pRoom.y, pRoom.width, splitRandom + 1);
             room2 = new RectInt(pRoom.x, pRoom.y + splitRandom, pRoom.width, pRoom.height - splitRandom);
 
         }
-        //Debug.Log(splitRandom);
-        roomsToSplit.Insert(0, room1); roomsToSplit.Insert(1, room2);
+        _roomsToSplit.Insert(0, room1); _roomsToSplit.Insert(1, room2);
     }
+
 
     void MakeDoor(RectInt room1, RectInt room2)
     {
@@ -262,53 +224,92 @@ public class DungeonGenerator : MonoBehaviour
         }
         else Debug.LogError("Intersection not valid");
 
-        Doors.Add(door);
-        graph.AddEdge(door, room1); graph.AddEdge(door, room2);
+        _doors.Add(door);
+        _graph.AddEdge(door, room1); _graph.AddEdge(door, room2);
     }
 
 
-    /// <summary> Assests
-    /// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// </summary>
-    [Button]
+    void RemoveSmallest()
+    {
+        //Remove rooms
+        Dictionary<RectInt, int> roomSize = new Dictionary<RectInt, int>();
+      
+        for (int i = 0; i < _roomsToDraw.Count; i++)
+        {
+            roomSize.Add(_roomsToDraw[i], _roomsToDraw[i].width * _roomsToDraw[i].height);
+        }
+        bool connected = true;
+        for (int i = 0; i < _roomsToDraw.Count/5 && connected; i++) // did 20% for a better effect
+        {
+            var minRoom = roomSize.OrderBy(kvp => kvp.Value).First(); //Got this line from the internet (Gets min value)
+            List<RectInt> temp_doors = new List<RectInt>();
+
+            foreach (var neighbor in _graph.GetNeighbors(minRoom.Key))
+            {
+                _graph.RemoveNode(neighbor);
+                temp_doors.Add(neighbor);
+            }
+            _graph.RemoveNode(minRoom.Key);
+
+            if (!_graph.BFS(roomSize.OrderByDescending(x => x.Value).First().Key)) //Got this line from the internet (Gets max value)
+            {
+                connected = false;
+                Debug.Log("removal stopped");
+            }
+            else
+            {
+                foreach(var door in temp_doors)
+                {
+                    _doors.Remove(door);
+                }
+                _roomsToDraw.Remove(minRoom.Key);
+                roomSize.Remove(minRoom.Key);
+            }
+            //Debug.Log($"\"{minRoom.Key}\" : \"{minRoom.Value}\"");
+        }
+    }
+
+    // Assests
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
     public void SpawnDungeonAssets()
     {
         Destroy(WallsParent);
         Destroy(FloorParent);
-        Wallparents.Clear(); Walls.Clear();
+        _wallparents.Clear(); _walls.Clear();
 
         WallsParent = new GameObject("WallParent");
         FloorParent = new GameObject("ParentFloor");
 
-        for (int i = 0; i < Doors.Count; i++)
+        for (int i = 0; i < _doors.Count; i++)
         {
-            Walls.Add(Doors[i].position);
-            if(Doors[i].height > 1) Walls.Add(new Vector2(Doors[i].x, Doors[i].y+1));
-            else if (Doors[i].width > 1) Walls.Add(new Vector2(Doors[i].x+1, Doors[i].y));
+            _walls.Add(_doors[i].position);
+            if(_doors[i].height > 1) _walls.Add(new Vector2(_doors[i].x, _doors[i].y+1));
+            else if (_doors[i].width > 1) _walls.Add(new Vector2(_doors[i].x+1, _doors[i].y));
         }
-        for (int i = 0; i < roomsToDraw.Count; i++)
+        for (int i = 0; i < _roomsToDraw.Count; i++)
         {
-            spawnroom(roomsToDraw[i]);
+            spawnroom(_roomsToDraw[i]);
         }
         CreateFloor();
     }
 
+
     private void spawnroom(RectInt rectInt)
     {
-        //Debug.Log(rectInt);
         GameObject parentGameObject = new GameObject("Room: " + rectInt.position);
-        Wallparents.Add(parentGameObject);
+        _wallparents.Add(parentGameObject);
 
         for (int i = 0; i < rectInt.height; i++)
         {
             Vector2 postition = new Vector2(rectInt.x, rectInt.y + i);
 
-            if (!Walls.Contains(postition))
+            if (!_walls.Contains(postition))
             {
                 WallPrefabsInstantiate(postition, parentGameObject);
             }
             postition = new Vector2(rectInt.x + rectInt.width - 1, rectInt.y + i);
-            if (!Walls.Contains(postition))
+            if (!_walls.Contains(postition))
             {
                 WallPrefabsInstantiate(postition, parentGameObject);
             }
@@ -317,12 +318,12 @@ public class DungeonGenerator : MonoBehaviour
         for (int i = 0; i < rectInt.width; i++)
         {
             Vector2 postition = new Vector2(rectInt.x + i, rectInt.y);
-            if (!Walls.Contains(postition))
+            if (!_walls.Contains(postition))
             {
                 WallPrefabsInstantiate(postition, parentGameObject);
             }
             postition = new Vector2(rectInt.x + i, rectInt.y + rectInt.height - 1);
-            if (!Walls.Contains(postition))
+            if (!_walls.Contains(postition))
             {
                 WallPrefabsInstantiate(postition, parentGameObject);
             }
@@ -331,37 +332,40 @@ public class DungeonGenerator : MonoBehaviour
         parentGameObject.transform.parent = WallsParent.transform;
     }
 
+    
     public void WallPrefabsInstantiate(Vector2 Pos, GameObject Parent)
     {
         var newObject = Instantiate(WallPrefab, new Vector3(Pos.x, 0, Pos.y), Quaternion.identity, Parent.transform);
         newObject.name = "Wall: " + Pos;
-        Walls.Add(Pos);
+        _walls.Add(Pos);
     }
+
 
     public void CreateFloor()
     {
-        for (int i = 0; i < roomsToDraw.Count; i++)
+        for (int i = 0; i < _roomsToDraw.Count; i++)
         {
-            GameObject parentfloor = new GameObject("ParentFloor" + roomsToDraw[i].position);
+            GameObject parentfloor = new GameObject("ParentFloor" + _roomsToDraw[i].position);
             parentfloor.transform.parent = FloorParent.transform;
-            for (int j = 1; j < roomsToDraw[i].width - 1; j++)
+            for (int j = 1; j < _roomsToDraw[i].width - 1; j++)
             {
-                for (int k = 1; k < roomsToDraw[i].height - 1; k++)
+                for (int k = 1; k < _roomsToDraw[i].height - 1; k++)
                 {
                     
-                    var newObject = Instantiate(FloorPrefab, new Vector3(j + roomsToDraw[i].x, 0, k + roomsToDraw[i].y), FloorPrefab.transform.rotation, parentfloor.transform);
+                    var newObject = Instantiate(FloorPrefab, new Vector3(j + _roomsToDraw[i].x, 0, k + _roomsToDraw[i].y), FloorPrefab.transform.rotation, parentfloor.transform);
                     newObject.name = "Floor: " + newObject.transform.position;
                 }
             }
         }
-        GameObject parentfloordoors = new GameObject("ParentFloor Doors");
+        GameObject parentfloordoors = new GameObject("ParentFloor _doors");
         parentfloordoors.transform.parent = FloorParent.transform;
-        for (int i = 0;i < Doors.Count; i++)
-        {
-            var newObject = Instantiate(FloorPrefab, new Vector3(Doors[i].x, 0, Doors[i].y), FloorPrefab.transform.rotation, parentfloordoors.transform);
 
-            if(Doors[i].height > 1) Instantiate(FloorPrefab, new Vector3(Doors[i].x, 0, Doors[i].y + 1), FloorPrefab.transform.rotation, parentfloordoors.transform);
-            else if (Doors[i].width > 1) Instantiate(FloorPrefab, new Vector3(Doors[i].x+1, 0, Doors[i].y), FloorPrefab.transform.rotation, parentfloordoors.transform);
+        for (int i = 0;i < _doors.Count; i++)
+        {
+            var newObject = Instantiate(FloorPrefab, new Vector3(_doors[i].x, 0, _doors[i].y), FloorPrefab.transform.rotation, parentfloordoors.transform);
+
+            if(_doors[i].height > 1) Instantiate(FloorPrefab, new Vector3(_doors[i].x, 0, _doors[i].y + 1), FloorPrefab.transform.rotation, parentfloordoors.transform);
+            else if (_doors[i].width > 1) Instantiate(FloorPrefab, new Vector3(_doors[i].x+1, 0, _doors[i].y), FloorPrefab.transform.rotation, parentfloordoors.transform);
             newObject.name = "Floor: " + newObject.transform.position;
         }
         FloorParent.transform.position = new Vector3(0.5f, 0, 0.5f);

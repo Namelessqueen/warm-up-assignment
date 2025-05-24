@@ -674,10 +674,10 @@ MonoBehaviour:
   startRoom:
     x: 0
     y: 0
-    width: 70
-    height: 70
+    width: 120
+    height: 120
   minRoomSizeRage: {x: 10, y: 12}
-  skipCoroutine: 1
+  SkipCoroutine: 0
   FloorPrefab: {fileID: 687030772495879857, guid: a0be9d1914a4e904eb363746bf17ae96, type: 3}
   WallPrefab: {fileID: 1834649349464787830, guid: 211d66aaf1444914e9cd932be1ede1a2, type: 3}
   Player: {fileID: 2096476180}
